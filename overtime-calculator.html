@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f1117">
+<title>OT Calc</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c25;
+    --surface2: #1e2330;
+    --border: #2a2f3e;
+    --accent: #00d4aa;
+    --accent-dim: rgba(0,212,170,0.12);
+    --accent-dim2: rgba(0,212,170,0.06);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --warn: #f59e0b;
+    --warn-dim: rgba(245,158,11,0.12);
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  header {
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .logo-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  main {
+    flex: 1;
+    padding: 24px 16px 32px;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  /* ---- Section label ---- */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  /* ---- Card ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+  }
+
+  /* ---- Toggle (12hr/24hr) ---- */
+  .toggle-row {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+  }
+
+  .toggle-row button {
+    flex: 1;
+    padding: 9px 0;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+
+  .toggle-row button.active {
+    background: var(--accent);
+    color: #000;
+  }
+
+  /* ---- Time input row ---- */
+  .time-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .time-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .time-field label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .time-input-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0 10px;
+    transition: border-color 0.15s;
+  }
+
+  .time-input-wrap:focus-within {
+    border-color: var(--accent);
+  }
+
+  .time-input-wrap input[type="time"] {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    padding: 12px 0;
+    -webkit-appearance: none;
+    appearance: none;
+    color-scheme: dark;
+    width: 100%;
+  }
+
+  /* ---- Select input ---- */
+  .select-wrap {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    transition: border-color 0.15s;
+  }
+
+  .select-wrap:focus-within { border-color: var(--accent); }
+
+  .select-wrap select {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 600;
+    padding: 13px 0;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+  }
+
+  .select-wrap::after {
+    content: '▾';
+    color: var(--muted);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  /* ---- Working hours section ---- */
+  .wh-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .preset-btn {
+    padding: 7px 13px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .preset-btn.active, .preset-btn:active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .custom-wh {
+    display: flex;
+    gap: 8px;
+  }
+
+  .wh-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .wh-field label {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .wh-field input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+    text-align: center;
+  }
+
+  .wh-field input:focus { border-color: var(--accent); }
+
+  /* ---- CTA ---- */
+  .cta {
+    width: 100%;
+    padding: 17px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 14px;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: opacity 0.15s, transform 0.1s;
+    text-transform: uppercase;
+  }
+
+  .cta:active { opacity: 0.85; transform: scale(0.99); }
+
+  /* ---- Results ---- */
+  #results {
+    display: none;
+    margin-top: 22px;
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .result-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .result-tile.accent-tile {
+    border-color: var(--accent);
+    background: var(--accent-dim2);
+  }
+
+  .result-tile.warn-tile {
+    border-color: var(--warn);
+    background: var(--warn-dim);
+  }
+
+  .tile-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .tile-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .tile-value.accent { color: var(--accent); }
+  .tile-value.warn { color: var(--warn); }
+
+  .tile-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ---- OT period bar ---- */
+  .ot-period-card {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 10px;
+  }
+
+  .ot-period-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .ot-period-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .ot-duration-badge {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .timeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .tl-time {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .tl-arrow {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    position: relative;
+  }
+
+  .tl-line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, var(--border) 0%, var(--accent) 100%);
+    position: relative;
+  }
+
+  .tl-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .tl-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 8px;
+    font-family: var(--mono);
+  }
+
+  .timeline-wrap {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tl-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+
+  .tl-labels span {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ---- No OT message ---- */
+  .no-ot {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    font-family: var(--mono);
+  }
+
+  .error-msg {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #f87171;
+    font-size: 13px;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0 14px;
+  }
+
+  .reset-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .reset-btn:active { border-color: var(--accent); color: var(--accent); }
+
+  /* AM/PM selector for 12hr */
+  .ampm-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    padding: 0 12px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: center;
+    color-scheme: dark;
+  }
+
+  .time-input-wrap.has-ampm {
+    padding-right: 0;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  /* 12hr manual input */
+  .time12-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+  }
+
+  .time12-inputs {
+    display: flex;
+    align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+
+  .time12-inputs:focus-within { border-color: var(--accent); }
+
+  .time12-num {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    padding: 12px 0 12px 14px;
+    width: 44px;
+    text-align: center;
+    -moz-appearance: textfield;
+  }
+
+  .time12-num::-webkit-outer-spin-button,
+  .time12-num::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .time12-colon {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 0 2px;
+  }
+
+  .time12-min {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    padding: 12px 0;
+    width: 44px;
+    text-align: center;
+    -moz-appearance: textfield;
+  }
+
+  .time12-min::-webkit-outer-spin-button,
+  .time12-min::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .time12-ampm {
+    margin-left: auto;
+    background: var(--accent-dim);
+    border: none;
+    border-left: 1px solid var(--border);
+    outline: none;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0 14px;
+    align-self: stretch;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: center;
+    color-scheme: dark;
+    min-width: 60px;
+  }
+
+  /* Full-day progress bar */
+  .progress-section { margin-bottom: 10px; }
+
+  .progress-bar-wrap {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .progress-labels span {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .bar-track {
+    height: 10px;
+    background: var(--border);
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .bar-regular {
+    background: #3b82f6;
+    height: 100%;
+    border-radius: 5px 0 0 5px;
+    transition: width 0.4s ease;
+  }
+
+  .bar-overtime {
+    background: var(--accent);
+    height: 100%;
+    transition: width 0.4s ease;
+  }
+
+  .bar-legend {
+    display: flex;
+    gap: 14px;
+    margin-top: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">OT · Calc</span>
+  <div class="logo-line"></div>
+</header>
+
+<main>
+  <h1>Over<span>time</span></h1>
+  <p class="subtitle">Calculate your overtime in seconds.</p>
+
+  <!-- Clock format global toggle -->
+  <p class="section-label">Clock format</p>
+  <div class="toggle-row" id="formatToggle">
+    <button class="active" data-fmt="12" onclick="setFormat(12)">12-hour</button>
+    <button data-fmt="24" onclick="setFormat(24)">24-hour</button>
+  </div>
+
+  <!-- Sign In -->
+  <div class="card">
+    <div class="card-title">Sign-in time</div>
+    <div id="inTime12" class="time12-inputs">
+      <input class="time12-num" id="inH" type="number" min="1" max="12" placeholder="08" maxlength="2" inputmode="numeric" oninput="limitNum(this,1,12)">
+      <span class="time12-colon">:</span>
+      <input class="time12-min" id="inM" type="number" min="0" max="59" placeholder="00" maxlength="2" inputmode="numeric" oninput="limitNum(this,0,59)">
+      <select class="time12-ampm" id="inAMPM"><option>AM</option><option>PM</option></select>
+    </div>
+    <div id="inTime24" class="time-input-wrap" style="display:none;">
+      <input type="time" id="inTime24val" value="08:00">
+    </div>
+  </div>
+
+  <!-- Sign Out -->
+  <div class="card">
+    <div class="card-title">Sign-out time</div>
+    <div id="outTime12" class="time12-inputs">
+      <input class="time12-num" id="outH" type="number" min="1" max="12" placeholder="05" maxlength="2" inputmode="numeric" oninput="limitNum(this,1,12)">
+      <span class="time12-colon">:</span>
+      <input class="time12-min" id="outM" type="number" min="0" max="59" placeholder="00" maxlength="2" inputmode="numeric" oninput="limitNum(this,0,59)">
+      <select class="time12-ampm" id="outAMPM"><option>AM</option><option selected>PM</option></select>
+    </div>
+    <div id="outTime24" class="time-input-wrap" style="display:none;">
+      <input type="time" id="outTime24val" value="17:00">
+    </div>
+  </div>
+
+  <!-- Working Hours -->
+  <div class="card">
+    <div class="card-title">Required working hours</div>
+    <div class="wh-presets">
+      <button class="preset-btn active" onclick="setPreset(7,15,this)">7h 15m <span style="opacity:.5;font-size:10px">default</span></button>
+      <button class="preset-btn" onclick="setPreset(8,0,this)">8h 00m</button>
+      <button class="preset-btn" onclick="setPreset(7,30,this)">7h 30m</button>
+      <button class="preset-btn" onclick="setPreset(0,0,this)" id="customPresetBtn">Custom</button>
+    </div>
+    <div class="custom-wh">
+      <div class="wh-field">
+        <label>Hours</label>
+        <input type="number" id="whHours" min="0" max="23" value="7" inputmode="numeric" oninput="limitNum(this,0,23);clearPreset()">
+      </div>
+      <div class="wh-field">
+        <label>Minutes</label>
+        <input type="number" id="whMins" min="0" max="59" value="15" inputmode="numeric" oninput="limitNum(this,0,59);clearPreset()">
+      </div>
+    </div>
+  </div>
+
+  <div id="errorMsg" class="error-msg"></div>
+
+  <button class="cta" onclick="calculate()">Calculate Overtime</button>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="divider" style="margin-top:20px;"></div>
+    <p class="section-label">Results</p>
+
+    <div class="result-grid">
+      <div class="result-tile">
+        <span class="tile-label">Time In</span>
+        <span class="tile-value" id="rIn">—</span>
+      </div>
+      <div class="result-tile">
+        <span class="tile-label">Time Out</span>
+        <span class="tile-value" id="rOut">—</span>
+      </div>
+    </div>
+
+    <div class="result-grid">
+      <div class="result-tile">
+        <span class="tile-label">Hours Worked</span>
+        <span class="tile-value" id="rWorked">—</span>
+      </div>
+      <div class="result-tile accent-tile">
+        <span class="tile-label">Overtime</span>
+        <span class="tile-value accent" id="rOT">—</span>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-section">
+      <div class="progress-bar-wrap">
+        <div class="progress-labels">
+          <span>Working day breakdown</span>
+          <span id="rTotalHours">—</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-regular" id="barRegular" style="width:0%"></div>
+          <div class="bar-overtime" id="barOT" style="width:0%"></div>
+        </div>
+        <div class="bar-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Regular</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Overtime</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overtime period -->
+    <div id="otPeriodCard" class="ot-period-card" style="display:none">
+      <div class="ot-period-header">
+        <span class="ot-period-label">Overtime period</span>
+        <span class="ot-duration-badge" id="otBadge">—</span>
+      </div>
+      <div class="timeline-wrap">
+        <div class="timeline">
+          <span class="tl-time" id="otStart">—</span>
+          <div class="tl-arrow">
+            <div class="tl-line"></div>
+            <div class="tl-dot"></div>
+          </div>
+          <span class="tl-time" id="otEnd">—</span>
+        </div>
+        <div class="tl-labels">
+          <span>OT begins</span>
+          <span>Sign out</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="noOtCard" class="no-ot" style="display:none">
+      ✓ No overtime — required hours not reached yet.
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">↺ Reset</button>
+  </div>
+</main>
+
+<script>
+  let clockFmt = 12;
+
+  // --- Format toggle ---
+  function setFormat(fmt) {
+    clockFmt = fmt;
+    document.querySelectorAll('#formatToggle button').forEach(b => {
+      b.classList.toggle('active', +b.dataset.fmt === fmt);
+    });
+    const is24 = fmt === 24;
+    document.getElementById('inTime12').style.display = is24 ? 'none' : 'flex';
+    document.getElementById('inTime24').style.display = is24 ? 'flex' : 'none';
+    document.getElementById('outTime12').style.display = is24 ? 'none' : 'flex';
+    document.getElementById('outTime24').style.display = is24 ? 'flex' : 'none';
+  }
+
+  // --- Limit number inputs ---
+  function limitNum(el, mn, mx) {
+    const v = parseInt(el.value);
+    if (!isNaN(v)) {
+      if (v > mx) el.value = mx;
+      if (v < mn && el.value.length >= 2) el.value = mn;
+    }
+  }
+
+  // --- Presets ---
+  let activePreset = null;
+  function setPreset(h, m, btn) {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activePreset = btn;
+    if (btn.id !== 'customPresetBtn') {
+      document.getElementById('whHours').value = h;
+      document.getElementById('whMins').value = m;
+    }
+  }
+
+  function clearPreset() {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('customPresetBtn').classList.add('active');
+    activePreset = null;
+  }
+
+  // --- Get minutes from inputs ---
+  function getInMinutes() {
+    if (clockFmt === 24) {
+      const v = document.getElementById('inTime24val').value;
+      if (!v) return null;
+      const [h, m] = v.split(':').map(Number);
+      return h * 60 + m;
+    } else {
+      let h = parseInt(document.getElementById('inH').value);
+      let m = parseInt(document.getElementById('inM').value) || 0;
+      const ap = document.getElementById('inAMPM').value;
+      if (isNaN(h) || h < 1 || h > 12) return null;
+      if (m < 0 || m > 59) return null;
+      if (ap === 'AM' && h === 12) h = 0;
+      if (ap === 'PM' && h !== 12) h += 12;
+      return h * 60 + m;
+    }
+  }
+
+  function getOutMinutes() {
+    if (clockFmt === 24) {
+      const v = document.getElementById('outTime24val').value;
+      if (!v) return null;
+      const [h, m] = v.split(':').map(Number);
+      return h * 60 + m;
+    } else {
+      let h = parseInt(document.getElementById('outH').value);
+      let m = parseInt(document.getElementById('outM').value) || 0;
+      const ap = document.getElementById('outAMPM').value;
+      if (isNaN(h) || h < 1 || h > 12) return null;
+      if (m < 0 || m > 59) return null;
+      if (ap === 'AM' && h === 12) h = 0;
+      if (ap === 'PM' && h !== 12) h += 12;
+      return h * 60 + m;
+    }
+  }
+
+  // --- Format minutes to display ---
+  function fmtTime(totalMins, fmt) {
+    let h = Math.floor(totalMins / 60) % 24;
+    let m = totalMins % 60;
+    if (fmt === 24) {
+      return pad(h) + ':' + pad(m);
+    } else {
+      const ap = h < 12 ? 'AM' : 'PM';
+      let h12 = h % 12;
+      if (h12 === 0) h12 = 12;
+      return h12 + ':' + pad(m) + ' ' + ap;
+    }
+  }
+
+  function pad(n) { return String(n).padStart(2,'0'); }
+
+  function fmtDuration(mins) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h === 0) return m + 'm';
+    if (m === 0) return h + 'h';
+    return h + 'h ' + m + 'm';
+  }
+
+  // --- Main calculation ---
+  function calculate() {
+    hideError();
+    const inM = getInMinutes();
+    const outM = getOutMinutes();
+    const whH = parseInt(document.getElementById('whHours').value) || 0;
+    const whMin = parseInt(document.getElementById('whMins').value) || 0;
+    const requiredMins = whH * 60 + whMin;
+
+    if (inM === null) { showError('Enter a valid sign-in time.'); return; }
+    if (outM === null) { showError('Enter a valid sign-out time.'); return; }
+    if (requiredMins === 0) { showError('Required working hours cannot be zero.'); return; }
+
+    let workedMins = outM - inM;
+    if (workedMins < 0) workedMins += 24 * 60; // crosses midnight
+    if (workedMins === 0) { showError('Sign-in and sign-out times are the same.'); return; }
+
+    const otMins = Math.max(0, workedMins - requiredMins);
+    const otStartMins = inM + requiredMins;
+
+    // Fill results
+    document.getElementById('rIn').textContent = fmtTime(inM, clockFmt);
+    document.getElementById('rOut').textContent = fmtTime(outM > 24*60 ? outM - 24*60 : outM, clockFmt);
+    document.getElementById('rWorked').textContent = fmtDuration(workedMins);
+    document.getElementById('rOT').textContent = otMins > 0 ? fmtDuration(otMins) : '0m';
+
+    // Total hours label
+    document.getElementById('rTotalHours').textContent = fmtDuration(workedMins) + ' total';
+
+    // Progress bar
+    const regPct = Math.min(100, (requiredMins / workedMins) * 100);
+    const otPct = Math.max(0, 100 - regPct);
+    document.getElementById('barRegular').style.width = regPct + '%';
+    document.getElementById('barOT').style.width = otPct + '%';
+
+    // OT period
+    if (otMins > 0) {
+      document.getElementById('otPeriodCard').style.display = 'block';
+      document.getElementById('noOtCard').style.display = 'none';
+      document.getElementById('otStart').textContent = fmtTime(otStartMins % (24*60), clockFmt);
+      document.getElementById('otEnd').textContent = fmtTime(outM % (24*60), clockFmt);
+      document.getElementById('otBadge').textContent = fmtDuration(otMins);
+    } else {
+      document.getElementById('otPeriodCard').style.display = 'none';
+      document.getElementById('noOtCard').style.display = 'block';
+    }
+
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideError() {
+    document.getElementById('errorMsg').style.display = 'none';
+  }
+
+  function resetAll() {
+    document.getElementById('results').style.display = 'none';
+    hideError();
+    // Reset 12hr
+    document.getElementById('inH').value = '';
+    document.getElementById('inM').value = '';
+    document.getElementById('inAMPM').value = 'AM';
+    document.getElementById('outH').value = '';
+    document.getElementById('outM').value = '';
+    document.getElementById('outAMPM').value = 'PM';
+    // Reset 24hr
+    document.getElementById('inTime24val').value = '08:00';
+    document.getElementById('outTime24val').value = '17:00';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
