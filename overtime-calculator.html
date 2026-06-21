@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f1117">
+<title>OT Calc</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c25;
+    --surface2: #1e2330;
+    --border: #2a2f3e;
+    --accent: #00d4aa;
+    --accent-dim: rgba(0,212,170,0.12);
+    --accent-dim2: rgba(0,212,170,0.06);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --warn: #f59e0b;
+    --warn-dim: rgba(245,158,11,0.12);
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .logo-line { flex: 1; height: 1px; background: var(--border); }
+
+  main {
+    padding: 24px 16px 48px;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  /* ---- Format toggle ---- */
+  .toggle-row {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+  }
+
+  .toggle-row button {
+    flex: 1;
+    padding: 9px 0;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+
+  .toggle-row button.active {
+    background: var(--accent);
+    color: #000;
+  }
+
+  /* ---- Smart time input ---- */
+  .time-box {
+    display: flex;
+    align-items: center;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0 16px;
+    transition: border-color 0.15s;
+    cursor: text;
+    position: relative;
+  }
+
+  .time-box.focused { border-color: var(--accent); }
+  .time-box.error-state { border-color: #ef4444; }
+
+  /* The hidden real input */
+  .time-hidden-input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    top: 50%;
+    left: 50%;
+    border: none;
+    outline: none;
+    font-size: 16px; /* prevent iOS zoom */
+  }
+
+  /* Visual display */
+  .time-display {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 14px 0;
+    flex: 1;
+    user-select: none;
+  }
+
+  .time-seg {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 38px;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+
+  .time-seg.placeholder { color: var(--border); }
+  .time-seg.active-seg { color: var(--accent); }
+
+  .time-colon {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 0 2px;
+  }
+
+  .time-ampm {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-left: 10px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  .time-ampm:active { background: rgba(0,212,170,0.25); }
+
+  .time-hint {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 6px;
+  }
+
+  /* ---- Working hours ---- */
+  .wh-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .preset-btn {
+    padding: 7px 13px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .preset-btn.active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .custom-wh { display: flex; gap: 8px; }
+
+  .wh-field { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+  .wh-field label { font-size: 11px; color: var(--muted); }
+
+  .wh-field input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    outline: none;
+    width: 100%;
+    text-align: center;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+
+  .wh-field input::-webkit-outer-spin-button,
+  .wh-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .wh-field input:focus { border-color: var(--accent); }
+
+  /* ---- CTA ---- */
+  .cta {
+    width: 100%;
+    padding: 17px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 14px;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    margin-top: 6px;
+    text-transform: uppercase;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .cta:active { opacity: 0.85; transform: scale(0.99); }
+
+  .error-msg {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #f87171;
+    font-size: 13px;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* ---- Results ---- */
+  #results { display: none; margin-top: 22px; }
+
+  .divider { height: 1px; background: var(--border); margin: 4px 0 14px; }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .result-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .result-tile.accent-tile {
+    border-color: var(--accent);
+    background: var(--accent-dim2);
+  }
+
+  .tile-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .tile-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .tile-value.accent { color: var(--accent); }
+
+  /* Progress bar */
+  .progress-bar-wrap {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .progress-labels span {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .bar-track {
+    height: 10px;
+    background: var(--border);
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .bar-regular { background: #3b82f6; height: 100%; transition: width 0.4s ease; }
+  .bar-overtime { background: var(--accent); height: 100%; transition: width 0.4s ease; }
+
+  .bar-legend { display: flex; gap: 14px; margin-top: 8px; }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* OT period */
+  .ot-period-card {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 10px;
+  }
+
+  .ot-period-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .ot-period-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .ot-duration-badge {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .timeline { display: flex; align-items: center; }
+  .tl-time { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text); white-space: nowrap; }
+
+  .tl-arrow {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+  }
+
+  .tl-line { flex: 1; height: 2px; background: linear-gradient(90deg, var(--border) 0%, var(--accent) 100%); }
+  .tl-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+  .tl-labels { display: flex; justify-content: space-between; margin-top: 4px; }
+  .tl-labels span { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+  .no-ot {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    font-family: var(--mono);
+    margin-bottom: 10px;
+  }
+
+  .reset-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .reset-btn:active { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">OT · Calc</span>
+  <div class="logo-line"></div>
+</header>
+
+<main>
+  <h1>Over<span>time</span></h1>
+  <p class="subtitle">Type HHMM — it formats automatically.</p>
+
+  <!-- Format toggle -->
+  <p class="section-label">Clock format</p>
+  <div class="toggle-row" id="formatToggle">
+    <button class="active" data-fmt="12" onclick="setFormat(12)">12-hour</button>
+    <button data-fmt="24" onclick="setFormat(24)">24-hour</button>
+  </div>
+
+  <!-- Sign In -->
+  <div class="card">
+    <div class="card-title">Sign-in time</div>
+    <div class="time-box" id="inBox" onclick="focusTimeInput('in')">
+      <input class="time-hidden-input" id="inRaw" type="tel" inputmode="numeric"
+             maxlength="4" autocomplete="off" autocorrect="off" spellcheck="false"
+             oninput="handleTimeInput('in')"
+             onkeydown="handleTimeKey(event,'in')"
+             onfocus="onTimeFocus('in')"
+             onblur="onTimeBlur('in')">
+      <div class="time-display" id="inDisplay">
+        <span class="time-seg placeholder" id="inH1">H</span>
+        <span class="time-seg placeholder" id="inH2">H</span>
+        <span class="time-colon">:</span>
+        <span class="time-seg placeholder" id="inM1">M</span>
+        <span class="time-seg placeholder" id="inM2">M</span>
+        <span class="time-ampm" id="inAMPM" onclick="toggleAMPM('in',event)" style="display:none">AM</span>
+      </div>
+    </div>
+    <div class="time-hint" id="inHint">Tap and type 4 digits, e.g. 0700</div>
+  </div>
+
+  <!-- Sign Out -->
+  <div class="card">
+    <div class="card-title">Sign-out time</div>
+    <div class="time-box" id="outBox" onclick="focusTimeInput('out')">
+      <input class="time-hidden-input" id="outRaw" type="tel" inputmode="numeric"
+             maxlength="4" autocomplete="off" autocorrect="off" spellcheck="false"
+             oninput="handleTimeInput('out')"
+             onkeydown="handleTimeKey(event,'out')"
+             onfocus="onTimeFocus('out')"
+             onblur="onTimeBlur('out')">
+      <div class="time-display" id="outDisplay">
+        <span class="time-seg placeholder" id="outH1">H</span>
+        <span class="time-seg placeholder" id="outH2">H</span>
+        <span class="time-colon">:</span>
+        <span class="time-seg placeholder" id="outM1">M</span>
+        <span class="time-seg placeholder" id="outM2">M</span>
+        <span class="time-ampm" id="outAMPM" onclick="toggleAMPM('out',event)" style="display:none">PM</span>
+      </div>
+    </div>
+    <div class="time-hint" id="outHint">Tap and type 4 digits, e.g. 1700</div>
+  </div>
+
+  <!-- Working Hours -->
+  <div class="card">
+    <div class="card-title">Required working hours</div>
+    <div class="wh-presets">
+      <button class="preset-btn active" onclick="setPreset(7,15,this)">7h 15m <span style="opacity:.5;font-size:10px">default</span></button>
+      <button class="preset-btn" onclick="setPreset(8,0,this)">8h 00m</button>
+      <button class="preset-btn" onclick="setPreset(7,30,this)">7h 30m</button>
+      <button class="preset-btn" id="customPresetBtn" onclick="setCustom(this)">Custom</button>
+    </div>
+    <div class="custom-wh">
+      <div class="wh-field">
+        <label>Hours</label>
+        <input type="number" id="whHours" min="0" max="23" value="7" inputmode="numeric" oninput="clearPreset()">
+      </div>
+      <div class="wh-field">
+        <label>Minutes</label>
+        <input type="number" id="whMins" min="0" max="59" value="15" inputmode="numeric" oninput="clearPreset()">
+      </div>
+    </div>
+  </div>
+
+  <div id="errorMsg" class="error-msg"></div>
+  <button class="cta" onclick="calculate()">Calculate Overtime</button>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="divider" style="margin-top:20px;"></div>
+    <p class="section-label">Results</p>
+
+    <div class="result-grid">
+      <div class="result-tile">
+        <span class="tile-label">Time In</span>
+        <span class="tile-value" id="rIn">—</span>
+      </div>
+      <div class="result-tile">
+        <span class="tile-label">Time Out</span>
+        <span class="tile-value" id="rOut">—</span>
+      </div>
+    </div>
+
+    <div class="result-grid">
+      <div class="result-tile">
+        <span class="tile-label">Hours Worked</span>
+        <span class="tile-value" id="rWorked">—</span>
+      </div>
+      <div class="result-tile accent-tile">
+        <span class="tile-label">Overtime</span>
+        <span class="tile-value accent" id="rOT">—</span>
+      </div>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-labels">
+        <span>Working day breakdown</span>
+        <span id="rTotalHours">—</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-regular" id="barRegular" style="width:0%"></div>
+        <div class="bar-overtime" id="barOT" style="width:0%"></div>
+      </div>
+      <div class="bar-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Regular</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Overtime</div>
+      </div>
+    </div>
+
+    <div id="otPeriodCard" class="ot-period-card" style="display:none">
+      <div class="ot-period-header">
+        <span class="ot-period-label">Overtime period</span>
+        <span class="ot-duration-badge" id="otBadge">—</span>
+      </div>
+      <div>
+        <div class="timeline">
+          <span class="tl-time" id="otStart">—</span>
+          <div class="tl-arrow"><div class="tl-line"></div><div class="tl-dot"></div></div>
+          <span class="tl-time" id="otEnd">—</span>
+        </div>
+        <div class="tl-labels">
+          <span>OT begins</span>
+          <span>Sign out</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="noOtCard" class="no-ot" style="display:none">
+      ✓ No overtime — required hours not reached yet.
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">↺ Reset</button>
+  </div>
+</main>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────
+let clockFmt = 12;
+
+// ── Format toggle ──────────────────────────────────────────────────────
+function setFormat(fmt) {
+  clockFmt = fmt;
+  document.querySelectorAll('#formatToggle button').forEach(b =>
+    b.classList.toggle('active', +b.dataset.fmt === fmt)
+  );
+  // Show/hide AM/PM badges
+  ['in','out'].forEach(id => {
+    const el = document.getElementById(id + 'AMPM');
+    el.style.display = fmt === 12 ? 'inline-block' : 'none';
+  });
+  // Re-render displays
+  renderDisplay('in');
+  renderDisplay('out');
+}
+
+// ── Focus helpers ──────────────────────────────────────────────────────
+function focusTimeInput(id) {
+  const inp = document.getElementById(id + 'Raw');
+  inp.focus();
+}
+
+function onTimeFocus(id) {
+  document.getElementById(id + 'Box').classList.add('focused');
+  renderDisplay(id);
+}
+
+function onTimeBlur(id) {
+  document.getElementById(id + 'Box').classList.remove('focused');
+  // Pad to 4 digits on blur if partially filled
+  const inp = document.getElementById(id + 'Raw');
+  if (inp.value.length > 0 && inp.value.length < 4) {
+    // If only 3 digits (e.g. "730"), treat as H:MM by padding left
+    // Better: pad right with zeros  e.g. "7" → "0700"
+    inp.value = inp.value.padStart(4, '0');
+    renderDisplay(id);
+  }
+  renderDisplay(id);
+}
+
+// ── Handle typing ──────────────────────────────────────────────────────
+function handleTimeInput(id) {
+  const inp = document.getElementById(id + 'Raw');
+  // Strip non-digits
+  let val = inp.value.replace(/\D/g, '');
+  // Max 4 digits
+  if (val.length > 4) val = val.slice(0, 4);
+  inp.value = val;
+
+  renderDisplay(id);
+
+  // Auto-advance to next field when 4 digits entered
+  if (val.length === 4) {
+    if (id === 'in') {
+      // Move to sign-out
+      setTimeout(() => focusTimeInput('out'), 80);
+    } else if (id === 'out') {
+      // Dismiss keyboard / move to calculate
+      inp.blur();
+    }
+  }
+}
+
+function handleTimeKey(e, id) {
+  // Allow: backspace, delete, tab, arrows
+  const allowed = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','Enter'];
+  if (allowed.includes(e.key)) return;
+  // Block non-numeric
+  if (!/^\d$/.test(e.key)) e.preventDefault();
+}
+
+// ── Render the big digit display ───────────────────────────────────────
+function renderDisplay(id) {
+  const val = document.getElementById(id + 'Raw').value;
+  const digits = val.split('');
+  const ph = ['H','H','M','M'];
+  const segIds = [id+'H1', id+'H2', id+'M1', id+'M2'];
+  const isFocused = document.getElementById(id + 'Box').classList.contains('focused');
+
+  segIds.forEach((sid, i) => {
+    const el = document.getElementById(sid);
+    if (digits[i] !== undefined) {
+      el.textContent = digits[i];
+      el.className = 'time-seg';
+    } else {
+      el.textContent = ph[i];
+      // Highlight next expected digit position when focused
+      if (isFocused && i === digits.length) {
+        el.className = 'time-seg active-seg';
+      } else {
+        el.className = 'time-seg placeholder';
+      }
+    }
+  });
+}
+
+// ── AM/PM toggle ───────────────────────────────────────────────────────
+function toggleAMPM(id, e) {
+  e.stopPropagation();
+  const el = document.getElementById(id + 'AMPM');
+  el.textContent = el.textContent === 'AM' ? 'PM' : 'AM';
+}
+
+// ── Parse typed digits to total minutes ───────────────────────────────
+function parseTimeToMins(id) {
+  const val = document.getElementById(id + 'Raw').value;
+  if (val.length < 3) return null; // need at least 3 digits
+
+  // Pad to 4
+  const padded = val.padStart(4, '0');
+  let h = parseInt(padded.slice(0, 2));
+  let m = parseInt(padded.slice(2, 4));
+
+  if (m > 59) return null;
+
+  if (clockFmt === 12) {
+    const ap = document.getElementById(id + 'AMPM').textContent;
+    if (h < 1 || h > 12) return null;
+    if (ap === 'AM' && h === 12) h = 0;
+    if (ap === 'PM' && h !== 12) h += 12;
+  } else {
+    if (h > 23) return null;
+  }
+
+  return h * 60 + m;
+}
+
+// ── Working hour presets ───────────────────────────────────────────────
+function setPreset(h, m, btn) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('whHours').value = h;
+  document.getElementById('whMins').value = m;
+}
+
+function setCustom(btn) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('whHours').value = '';
+  document.getElementById('whMins').value = '';
+  document.getElementById('whHours').focus();
+}
+
+function clearPreset() {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('customPresetBtn').classList.add('active');
+}
+
+// ── Formatting helpers ─────────────────────────────────────────────────
+function pad(n) { return String(n).padStart(2,'0'); }
+
+// Always display in 24-hour for results (per user request)
+function fmtTime24(totalMins) {
+  const h = Math.floor(totalMins / 60) % 24;
+  const m = totalMins % 60;
+  return pad(h) + ':' + pad(m);
+}
+
+function fmtDuration(mins) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return m + 'm';
+  if (m === 0) return h + 'h';
+  return h + 'h ' + m + 'm';
+}
+
+// ── Calculate ──────────────────────────────────────────────────────────
+function calculate() {
+  hideError();
+
+  const inM = parseTimeToMins('in');
+  const outM = parseTimeToMins('out');
+  const whH = parseInt(document.getElementById('whHours').value) || 0;
+  const whMin = parseInt(document.getElementById('whMins').value) || 0;
+  const requiredMins = whH * 60 + whMin;
+
+  if (inM === null) {
+    showError('Enter a valid sign-in time (e.g. 0700 or 0730).');
+    document.getElementById('inBox').classList.add('error-state');
+    return;
+  }
+  document.getElementById('inBox').classList.remove('error-state');
+
+  if (outM === null) {
+    showError('Enter a valid sign-out time (e.g. 1700 or 1730).');
+    document.getElementById('outBox').classList.add('error-state');
+    return;
+  }
+  document.getElementById('outBox').classList.remove('error-state');
+
+  if (requiredMins === 0) { showError('Required working hours cannot be zero.'); return; }
+
+  let workedMins = outM - inM;
+  if (workedMins < 0) workedMins += 24 * 60; // crosses midnight
+  if (workedMins === 0) { showError('Sign-in and sign-out times are the same.'); return; }
+
+  const otMins = Math.max(0, workedMins - requiredMins);
+  const otStartMins = (inM + requiredMins) % (24 * 60);
+
+  // Results — always show in 24hr
+  document.getElementById('rIn').textContent = fmtTime24(inM);
+  document.getElementById('rOut').textContent = fmtTime24(outM % (24 * 60));
+  document.getElementById('rWorked').textContent = fmtDuration(workedMins);
+  document.getElementById('rOT').textContent = otMins > 0 ? fmtDuration(otMins) : '0m';
+  document.getElementById('rTotalHours').textContent = fmtDuration(workedMins) + ' total';
+
+  // Progress bar
+  const regPct = Math.min(100, (Math.min(workedMins, requiredMins) / workedMins) * 100);
+  const otPct = 100 - regPct;
+  document.getElementById('barRegular').style.width = regPct + '%';
+  document.getElementById('barOT').style.width = otPct + '%';
+
+  // OT period — always 24hr
+  if (otMins > 0) {
+    document.getElementById('otPeriodCard').style.display = 'block';
+    document.getElementById('noOtCard').style.display = 'none';
+    document.getElementById('otStart').textContent = fmtTime24(otStartMins);
+    document.getElementById('otEnd').textContent = fmtTime24(outM % (24 * 60));
+    document.getElementById('otBadge').textContent = fmtDuration(otMins);
+  } else {
+    document.getElementById('otPeriodCard').style.display = 'none';
+    document.getElementById('noOtCard').style.display = 'block';
+  }
+
+  document.getElementById('results').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('errorMsg').style.display = 'none';
+  ['in','out'].forEach(id => document.getElementById(id+'Box').classList.remove('error-state'));
+}
+
+function resetAll() {
+  ['in','out'].forEach(id => {
+    document.getElementById(id + 'Raw').value = '';
+    renderDisplay(id);
+    document.getElementById(id + 'AMPM').textContent = id === 'in' ? 'AM' : 'PM';
+    document.getElementById(id + 'Box').classList.remove('error-state');
+  });
+  document.getElementById('results').style.display = 'none';
+  hideError();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Init — show AM/PM for 12hr default
+setFormat(12);
+</script>
+</body>
+</html>
